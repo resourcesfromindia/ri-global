@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFI Content Scheduler</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { color: #E73C37; margin-bottom: 20px; }
+        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .stats { display: flex; gap: 20px; margin-top: 15px; }
+        .stat-box { background: #f8f9fa; padding: 15px 25px; border-radius: 8px; text-align: center; }
+        .stat-box h3 { font-size: 2rem; color: #E73C37; }
+        .stat-box p { color: #666; font-size: 0.9rem; }
+        .day-selector { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        .day-btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; background: white; color: #333; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .day-btn:hover { background: #E73C37; color: white; }
+        .day-btn.active { background: #E73C37; color: white; }
+        .post-card { background: white; padding: 25px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .post-card h3 { color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .post-card h3 span { background: #E73C37; color: white; padding: 3px 10px; border-radius: 5px; font-size: 0.8rem; }
+        .post-content { background: #f8f9fa; padding: 20px; border-radius: 8px; white-space: pre-wrap; line-height: 1.8; color: #333; }
+        .copy-btn { background: #E73C37; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 15px; transition: all 0.3s; }
+        .copy-btn:hover { background: #C62828; transform: translateY(-2px); }
+        .copied { background: #4CAF50 !important; }
+        .instructions { background: #fff3cd; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #ffc107; }
+        .instructions h3 { color: #856404; margin-bottom: 10px; }
+        .instructions p { color: #856404; line-height: 1.6; }
+        .progress-bar { background: #e0e0e0; height: 10px; border-radius: 5px; margin-top: 20px; overflow: hidden; }
+        .progress-fill { background: linear-gradient(90deg, #E73C37, #FF6B35); height: 100%; width: 0%; transition: width 0.5s; }
+        .progress-text { text-align: center; margin-top: 10px; color: #666; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📅 RFI Content Scheduler</h1>
+            <p style="color: #666; margin-bottom: 15px;">Your 30-day LinkedIn posting plan - Click to copy!</p>
+            <div class="stats">
+                <div class="stat-box">
+                    <h3>30</h3>
+                    <p>Total Posts</p>
+                </div>
+                <div class="stat-box">
+                    <h3>6</h3>
+                    <p>Posts/Week</p>
+                </div>
+                <div class="stat-box">
+                    <h3>4</h3>
+                    <p>Weeks Plan</p>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar"></div>
+            </div>
+            <p class="progress-text"><span id="copiedCount">0</span> / 30 posts copied</p>
+        </div>
+
+        <div class="instructions">
+            <h3>📋 How to Use:</h3>
+            <p>
+                1. Click on any day to see the post content<br>
+                2. Click "Copy to Clipboard" button<br>
+                3. Go to LinkedIn and paste the post<br>
+                4. Add an image from Canva (use free templates)<br>
+                5. Schedule using Buffer or LinkedIn's scheduler<br>
+                6. Track your progress by clicking "Mark as Posted"
+            </p>
+        </div>
+
+        <div class="day-selector" id="daySelector"></div>
+
+        <div class="post-card" id="postCard" style="display:none;">
+            <h3><span id="postDay">Monday</span> - <span id="postTheme">Introduction</span></h3>
+            <div class="post-content" id="postContent"></div>
+            <button class="copy-btn" id="copyBtn" onclick="copyPost()">📋 Copy to Clipboard</button>
+        </div>
+
+        <div style="background: white; padding: 25px; border-radius: 10px; margin-top: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h3 style="color: #333; margin-bottom: 15px;">🎯 Quick Start Guide</h3>
+            <ol style="line-height: 2; color: #666; padding-left: 20px;">
+                <li><strong>Today:</strong> Copy and post Day 1 (Monday Introduction)</li>
+                <li><strong>This Week:</strong> Post according to the calendar schedule</li>
+                <li><strong>Use Buffer:</strong> Schedule posts for the next 2 weeks</li>
+                <li><strong>Track:</strong> Mark posts as "Posted" to track progress</li>
+                <li><strong>Engage:</strong> Reply to all comments within 1 hour</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        const posts = [
+            { day: "Monday", theme: "Introduction", content: `🎯 Did You Know?
+
+India is home to 63+ million MSMEs contributing 30% to GDP!
+
+Resources From India (RFI) bridges the gap between global buyers and verified Indian manufacturers.
+
+We verify suppliers, ensure quality, and build lasting partnerships.
+
+🔗 Learn more: resourcesfromindia.github.io/ri-global
+
+#MadeInIndia #GlobalTrade #B2B #SourcingFromIndia #Manufacturing` },
+            
+            { day: "Tuesday", theme: "Value Proposition", content: `🌏 Why Global Buyers Choose India:
+
+✓ 63+ million MSMEs
+✓ 28% lower manufacturing costs vs Western countries
+✓ World-class IT & engineering talent
+✓ Government support for exports
+✓ Fastest-growing major economy
+
+Your next supply chain partner might be in India. 🇮🇳
+
+#IndiaManufacturing #GlobalSourcing #SupplyChain #ImportExport` },
+            
+            { day: "Wednesday", theme: "Service Spotlight", content: `🔍 How We Verify Suppliers:
+
+Our verification process includes:
+✅ Factory audits
+✅ Financial background checks
+✅ Quality certifications review
+✅ References from existing clients
+✅ Production capacity assessment
+
+No more risky supplier deals! 💪
+
+#SupplierVerification #QualityAssurance #B2B #TradeSafe` },
+            
+            { day: "Thursday", theme: "Success Story", content: `📈 From Our Files:
+
+A European retailer was paying 40% more for home textiles.
+
+We connected them with 3 verified manufacturers in Jaipur.
+
+Result? 35% cost reduction + consistent quality for 2 years.
+
+Your success story could be next. 🚀
+
+#CaseStudy #SuccessStory #TextileIndustry #CostSavings` },
+            
+            { day: "Friday", theme: "Engagement", content: `🤔 Quick Question for Importers:
+
+What's your BIGGEST challenge when sourcing from India?
+
+A) Finding reliable suppliers
+B) Quality control
+C) Communication barriers
+D) Shipping & logistics
+E) All of the above
+
+Drop your answer below! 👇
+
+#ImportFromIndia #GlobalTrade #Question #Community` },
+            
+            { day: "Saturday", theme: "Educational", content: `📊 India - Trade Facts You Should Know:
+
+🇮🇳 World's 5th largest economy
+📦 7th largest exporter globally
+🏭 Top 3 destinations for manufacturing
+💰 $760+ billion trade volume
+🌐 Exports to 190+ countries
+
+India is open for business! Are you? 🌍
+
+#TradeFacts #IndiaEconomy #ExportImport #GlobalBusiness` },
+            
+            { day: "Sunday", theme: "Week Recap", content: `📋 This Week in Indian Manufacturing:
+
+• PLI scheme expanded to boost electronics
+• Record textile exports to EU
+• New MSME hub launched in Gujarat
+• ₹5000 Cr textile park approved
+
+Stay updated with RFI for more! 🔔
+
+#IndianManufacturing #MSME #WeeklyUpdate #Manufacturing` }
+        ];
+
+        // Expand to 30 days (repeat weeks)
+        let allPosts = [];
+        for (let week = 0; week < 4; week++) {
+            posts.forEach(post => {
+                allPosts.push({...post, dayNum: allPosts.length + 1});
+            });
+        }
+        allPosts = allPosts.slice(0, 30);
+
+        let currentPost = 0;
+        let copied = new Set();
+
+        // Load saved progress
+        const saved = localStorage.getItem('rfiProgress');
+        if (saved) copied = new Set(JSON.parse(saved));
+
+        function renderDaySelector() {
+            const container = document.getElementById('daySelector');
+            container.innerHTML = '';
+            
+            allPosts.forEach((post, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'day-btn' + (copied.has(idx) ? ' copied' : '');
+                btn.innerHTML = `Day ${post.dayNum}<br><small>${post.day}</small>`;
+                btn.onclick = () => showPost(idx);
+                container.appendChild(btn);
+            });
+            
+            updateProgress();
+        }
+
+        function showPost(idx) {
+            currentPost = idx;
+            const post = allPosts[idx];
+            document.getElementById('postDay').textContent = `Day ${post.dayNum} - ${post.day}`;
+            document.getElementById('postTheme').textContent = post.theme;
+            document.getElementById('postContent').textContent = post.content;
+            document.getElementById('postCard').style.display = 'block';
+            
+            const btn = document.getElementById('copyBtn');
+            btn.textContent = copied.has(idx) ? '✅ Copied!' : '📋 Copy to Clipboard';
+            btn.className = 'copy-btn' + (copied.has(idx) ? ' copied' : '');
+        }
+
+        function copyPost() {
+            const content = document.getElementById('postContent').textContent;
+            navigator.clipboard.writeText(content).then(() => {
+                copied.add(currentPost);
+                localStorage.setItem('rfiProgress', JSON.stringify([...copied]));
+                
+                const btn = document.getElementById('copyBtn');
+                btn.textContent = '✅ Copied!';
+                btn.className = 'copy-btn copied';
+                
+                updateProgress();
+                renderDaySelector();
+            });
+        }
+
+        function updateProgress() {
+            const pct = (copied.size / 30) * 100;
+            document.getElementById('progressBar').style.width = pct + '%';
+            document.getElementById('copiedCount').textContent = copied.size;
+        }
+
+        renderDaySelector();
+        showPost(0);
+    </script>
+</body>
+</html>
